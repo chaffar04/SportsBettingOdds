@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-const API_KEY = "f729a07358a9bfd9d6c88a7e69430c68";
+const API_KEY = "7cfb6498031d8b3354bac7143397e1c6";
 
 class Game {
   constructor(league, teams) {
@@ -19,6 +19,10 @@ class Game {
 
   setBookmakers(bookmakers) {
     this.bookmakers = [bookmakers[0], bookmakers[1]];
+  }
+
+  setStartTime(time) {
+    this.time = time;
   }
 
   interestRate() {
@@ -70,7 +74,7 @@ async function getGames(apiKey) {
 }
 
 function bestOdds(game) {
-  if (game.bookmakers[0]) {
+  if (game.bookmakers[0] && game.times[0]) {
     let team1, team2;
     team1 = team2 = 0;
     const gameInfo = game.bookmakers[0].markets[0]; //shortcut
