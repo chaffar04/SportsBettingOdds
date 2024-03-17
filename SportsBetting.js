@@ -7,6 +7,8 @@ class Game {
     this.league = league;
     this.teams = teams;
     this.startTime = startTime;
+    this.amount = 100;
+    this.betAmounts = [0, 0];
     this.odds = [0, 0];
   }
 
@@ -31,15 +33,17 @@ class Game {
   }
 
   interestRate() {
-    this.interest = 1 - Math.pow(this.odds[0], -1) - Math.pow(this.odds[1], -1);
+    this.calculateBetAmount();
+    const profit = this.betAmounts[0] * this.odds[0] - this.amount;
+    this.interest = Number(((profit / this.amount) * 100).toFixed(2));
     return this.interest;
   }
 
-  calculateBetAmount(amount) {
-    const betReturn = amount * (1 + this.interest);
-    this.betAmounts = this.odds.map((odd) =>
-      Number(betReturn / odd).toFixed(2)
+  calculateBetAmount() {
+    this.betAmounts[0] = Number(
+      (this.amount / (1 + this.odds[0] / this.odds[1])).toFixed(2)
     );
+    this.betAmounts[1] = Number((this.amount - this.betAmounts[0]).toFixed(2));
     return this.betAmounts;
   }
 }
@@ -70,18 +74,18 @@ async function getGames(apiKey) {
       const response = await axios.get(
         `https://api.the-odds-api.com/v4/sports/${leagueKey}/odds/?apiKey=${apiKey}&regions=us&markets=h2h,spreads&oddsFormat=decimal`
       );
-      if (
-        response.data[0] &&
-        response.data[0].bookmakers &&
-        response.data[0].bookmakers[0].markets &&
-        response.data[0].bookmakers[0].markets[0].outcomes.length < 3
-      ) {
-        response.data.forEach((game) => {
-          if (bestOdds(game)) {
-            games.push(bestOdds(game));
+      response.data.forEach((game) => {
+        const isMarketValid = game.bookmakers?.every((bookmaker) =>
+          bookmaker.markets?.every((market) => market.outcomes.length <= 2)
+        );
+
+        if (isMarketValid) {
+          const gameOdds = bestOdds(game);
+          if (gameOdds) {
+            games.push(gameOdds);
           }
-        });
-      }
+        }
+      });
     }
     return games;
   } catch (error) {
@@ -127,7 +131,6 @@ function topGames(games) {
 
   games.forEach((game) => {
     if (game.interestRate() > bestGames[0].interestRate()) {
-      game.calculateBetAmount(100);
       bestGames[0] = game;
       bestGames.sort((a, b) => a.interestRate() - b.interestRate());
     }
