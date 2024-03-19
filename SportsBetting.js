@@ -87,7 +87,7 @@ async function getGames(apiKey) {
 
     for (const leagueKey in leagues) {
       const response = await axios.get(
-        `https://api.the-odds-api.com/v4/sports/${leagueKey}/odds/?apiKey=${apiKey}&regions=us&markets=h2h,spreads&oddsFormat=decimal`
+        `https://api.the-odds-api.com/v4/sports/${leagueKey}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=decimal`
       );
       response.data.forEach((game) => {
         const gameOdds = bestOdds(game);
