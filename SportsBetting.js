@@ -108,15 +108,19 @@ function bestOdds(game) {
     const startTime = new Date(game.commence_time);
     let thisGame = new Game(game.sport_title, titles, startTime);
     const now = new Date();
-    let endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
+    const tomorrow = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1
+    );
+    tomorrow.setHours(23, 59, 59, 999); // Set to end of day
 
     game.bookmakers.forEach((bookmaker, index) => {
       if (bookmaker.markets && bookmaker.markets.length > 0) {
         oddsMath(bookmaker, index, game, thisGame);
       }
     });
-    if (thisGame.inTimeRange(startTime, now, endOfDay)) {
+    if (thisGame.inTimeRange(startTime, now, tomorrow)) {
       return thisGame;
     } else return null;
   } catch {
