@@ -8,8 +8,8 @@ class Game {
     this.teams = teams;
     this.startTime = startTime;
     this.amount = 100;
-    this.betAmounts = [0, 0];
-    this.odds = [0, 0];
+    this.betAmounts = [0, 0, 0];
+    this.odds = [0, 0, 0];
   }
 
   getTeamOdds(index) {
@@ -20,15 +20,30 @@ class Game {
     this.odds[index] = value;
   }
 
-  setBookmakers(bookmakers) {
+  set2Bookmakers(bookmakers) {
     this.bookmakers = [bookmakers[0], bookmakers[1]];
   }
 
-  inTimeRange(startTime, now, tomorrow) {
-    if (startTime > now && startTime < tomorrow) {
-      return true;
+  set3Bookmakers(bookmakers) {
+    this.bookmakers = [bookmakers[0], bookmakers[1], bookmakers[2]];
+  }
+
+  calculateBetAmount(game) {
+    if (this.odds[2] == 0) {
+      this.betAmounts[0] = Number(
+        (this.amount / (1 + this.odds[0] / this.odds[1])).toFixed(2)
+      );
+      this.betAmounts[1] = Number(
+        (this.amount - this.betAmounts[0]).toFixed(2)
+      );
     } else {
-      return false;
+      const totalWeight =
+        1 / this.odds[0] + 1 / this.odds[1] + 1 / this.odds[2];
+      const calculateBet = (odd) =>
+        Number((1 / odd / totalWeight) * this.amount).toFixed(2);
+      (this.betAmounts[0] = calculateBet(this.odds[0])),
+        (this.betAmounts[1] = calculateBet(this.odds[1])),
+        (this.betAmounts[2] = calculateBet(this.odds[2]));
     }
   }
 
@@ -39,12 +54,12 @@ class Game {
     return this.interest;
   }
 
-  calculateBetAmount() {
-    this.betAmounts[0] = Number(
-      (this.amount / (1 + this.odds[0] / this.odds[1])).toFixed(2)
-    );
-    this.betAmounts[1] = Number((this.amount - this.betAmounts[0]).toFixed(2));
-    return this.betAmounts;
+  inTimeRange(startTime, now, tomorrow) {
+    if (startTime > now && startTime < tomorrow) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 
@@ -75,16 +90,8 @@ async function getGames(apiKey) {
         `https://api.the-odds-api.com/v4/sports/${leagueKey}/odds/?apiKey=${apiKey}&regions=us&markets=h2h,spreads&oddsFormat=decimal`
       );
       response.data.forEach((game) => {
-        const isMarketValid = game.bookmakers?.every((bookmaker) =>
-          bookmaker.markets?.every((market) => market.outcomes.length <= 2)
-        );
-
-        if (isMarketValid) {
-          const gameOdds = bestOdds(game);
-          if (gameOdds) {
-            games.push(gameOdds);
-          }
-        }
+        const gameOdds = bestOdds(game);
+        gameOdds && games.push(gameOdds);
       });
     }
     return games;
@@ -94,32 +101,27 @@ async function getGames(apiKey) {
 }
 
 function bestOdds(game) {
-  if (game.bookmakers[0]) {
-    let team1, team2;
-    team1 = team2 = 0;
+  try {
+    team1 = team2 = team3 = 0;
     const gameInfo = game.bookmakers[0].markets[0]; //shortcut
-    const titles = [gameInfo.outcomes[0].name, gameInfo.outcomes[1].name]; // cleaner/shortcut
+    const titles = [gameInfo.outcomes[0].name, gameInfo.outcomes[1].name];
     const startTime = new Date(game.commence_time);
     let thisGame = new Game(game.sport_title, titles, startTime);
     const now = new Date();
     let endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
+
     game.bookmakers.forEach((bookmaker, index) => {
-      if (bookmaker.markets[0].outcomes[0].price > thisGame.getTeamOdds(0)) {
-        team1 = index;
-        thisGame.setTeamOdds(0, bookmaker.markets[0].outcomes[0].price);
-      }
-      if (bookmaker.markets[0].outcomes[1].price > thisGame.getTeamOdds(1)) {
-        team2 = index;
-        thisGame.setTeamOdds(1, bookmaker.markets[0].outcomes[1].price);
+      if (bookmaker.markets && bookmaker.markets.length > 0) {
+        oddsMath(bookmaker, index, game, thisGame);
       }
     });
-    platforms = [game.bookmakers[team1].title, game.bookmakers[team2].title];
-    thisGame.setBookmakers(platforms);
     if (thisGame.inTimeRange(startTime, now, endOfDay)) {
       return thisGame;
     } else return null;
-  } else return null;
+  } catch {
+    return null;
+  }
 }
 
 function topGames(games) {
@@ -136,6 +138,40 @@ function topGames(games) {
     }
   });
   return bestGames;
+}
+
+function oddsMath(bookmaker, index, game, thisGame) {
+  if (bookmaker.markets[0].outcomes.length < 3) {
+    if (bookmaker.markets[0].outcomes[0].price > thisGame.getTeamOdds(0)) {
+      team1 = index;
+      thisGame.setTeamOdds(0, bookmaker.markets[0].outcomes[0].price);
+    }
+    if (bookmaker.markets[0].outcomes[1].price > thisGame.getTeamOdds(1)) {
+      team2 = index;
+      thisGame.setTeamOdds(1, bookmaker.markets[0].outcomes[1].price);
+    }
+    platforms = [game.bookmakers[team1].title, game.bookmakers[team2].title];
+    thisGame.set2Bookmakers(platforms);
+  } else {
+    if (bookmaker.markets[0].outcomes[0].price > thisGame.getTeamOdds(0)) {
+      team1 = index;
+      thisGame.setTeamOdds(0, bookmaker.markets[0].outcomes[0].price);
+    }
+    if (bookmaker.markets[0].outcomes[1].price > thisGame.getTeamOdds(1)) {
+      team2 = index;
+      thisGame.setTeamOdds(1, bookmaker.markets[0].outcomes[1].price);
+    }
+    if (bookmaker.markets[0].outcomes[2].price > thisGame.getTeamOdds(2)) {
+      team3 = index;
+      thisGame.setTeamOdds(2, bookmaker.markets[0].outcomes[2].price);
+    }
+    platforms = [
+      game.bookmakers[team1].title,
+      game.bookmakers[team2].title,
+      game.bookmakers[team3].title,
+    ];
+    thisGame.set3Bookmakers(platforms);
+  }
 }
 
 async function main() {
