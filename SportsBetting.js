@@ -124,6 +124,7 @@ function bestOdds(game) {
       fanduel: 1,
       lowvig: 1,
       pointsbetus: 1,
+      williamhill_us: 1,
     };
     game.bookmakers.forEach((bookmaker, index) => {
       if (bookmaker.markets && bookmaker.markets.length > 0) {
