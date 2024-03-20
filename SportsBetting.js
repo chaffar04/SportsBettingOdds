@@ -120,9 +120,10 @@ function bestOdds(game) {
         oddsMath(bookmaker, index, game, thisGame);
       }
     });
-    if (thisGame.inTimeRange(startTime, now, tomorrow)) {
+    /*if (thisGame.inTimeRange(startTime, now, tomorrow)) {
       return thisGame;
-    } else return null;
+    } else return null;*/
+    return thisGame;
   } catch {
     return null;
   }
