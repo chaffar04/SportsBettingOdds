@@ -54,8 +54,8 @@ class Game {
     return this.interest;
   }
 
-  inTimeRange(startTime, now, tomorrow) {
-    if (startTime > now && startTime < tomorrow) {
+  inTimeRange(startTime, later) {
+    if (startTime < later) {
       return true;
     } else {
       return false;
@@ -107,6 +107,13 @@ function bestOdds(game) {
     const titles = [gameInfo.outcomes[0].name, gameInfo.outcomes[1].name];
     const startTime = new Date(game.commence_time);
     let thisGame = new Game(game.sport_title, titles, startTime);
+    const now = new Date();
+    const later = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 3
+    );
+    later.setHours(23, 59, 59, 999);
     let gameDict = {
       betonlineag: 1,
       betmgm: 1,
@@ -123,7 +130,9 @@ function bestOdds(game) {
         oddsMath(bookmaker, index, game, thisGame, gameDict);
       }
     });
-    return thisGame;
+    if (thisGame.inTimeRange(startTime, later)) {
+      return thisGame;
+    } else return null;
   } catch {
     return null;
   }
