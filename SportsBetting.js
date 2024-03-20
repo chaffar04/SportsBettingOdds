@@ -107,22 +107,22 @@ function bestOdds(game) {
     const titles = [gameInfo.outcomes[0].name, gameInfo.outcomes[1].name];
     const startTime = new Date(game.commence_time);
     let thisGame = new Game(game.sport_title, titles, startTime);
-    const now = new Date();
-    const tomorrow = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 1
-    );
-    tomorrow.setHours(23, 59, 59, 999); // Set to end of day
-
+    let gameDict = {
+      betonlineag: 1,
+      betmgm: 1,
+      betrivers: 1,
+      betus: 1,
+      bovada: 1,
+      draftkings: 1,
+      fanduel: 1,
+      lowvig: 1,
+      pointsbetus: 1,
+    };
     game.bookmakers.forEach((bookmaker, index) => {
       if (bookmaker.markets && bookmaker.markets.length > 0) {
-        oddsMath(bookmaker, index, game, thisGame);
+        oddsMath(bookmaker, index, game, thisGame, gameDict);
       }
     });
-    /*if (thisGame.inTimeRange(startTime, now, tomorrow)) {
-      return thisGame;
-    } else return null;*/
     return thisGame;
   } catch {
     return null;
@@ -145,28 +145,43 @@ function topGames(games) {
   return bestGames;
 }
 
-function oddsMath(bookmaker, index, game, thisGame) {
+function oddsMath(bookmaker, index, game, thisGame, gameDict) {
   if (bookmaker.markets[0].outcomes.length < 3) {
-    if (bookmaker.markets[0].outcomes[0].price > thisGame.getTeamOdds(0)) {
+    if (
+      bookmaker.markets[0].outcomes[0].price > thisGame.getTeamOdds(0) &&
+      bookmaker.key in gameDict
+    ) {
       team1 = index;
       thisGame.setTeamOdds(0, bookmaker.markets[0].outcomes[0].price);
     }
-    if (bookmaker.markets[0].outcomes[1].price > thisGame.getTeamOdds(1)) {
+    if (
+      bookmaker.markets[0].outcomes[1].price > thisGame.getTeamOdds(1) &&
+      bookmaker.key in gameDict
+    ) {
       team2 = index;
       thisGame.setTeamOdds(1, bookmaker.markets[0].outcomes[1].price);
     }
     platforms = [game.bookmakers[team1].title, game.bookmakers[team2].title];
     thisGame.set2Bookmakers(platforms);
   } else {
-    if (bookmaker.markets[0].outcomes[0].price > thisGame.getTeamOdds(0)) {
+    if (
+      bookmaker.markets[0].outcomes[0].price > thisGame.getTeamOdds(0) &&
+      bookmaker.key in gameDict
+    ) {
       team1 = index;
       thisGame.setTeamOdds(0, bookmaker.markets[0].outcomes[0].price);
     }
-    if (bookmaker.markets[0].outcomes[1].price > thisGame.getTeamOdds(1)) {
+    if (
+      bookmaker.markets[0].outcomes[1].price > thisGame.getTeamOdds(1) &&
+      bookmaker.key in gameDict
+    ) {
       team2 = index;
       thisGame.setTeamOdds(1, bookmaker.markets[0].outcomes[1].price);
     }
-    if (bookmaker.markets[0].outcomes[2].price > thisGame.getTeamOdds(2)) {
+    if (
+      bookmaker.markets[0].outcomes[2].price > thisGame.getTeamOdds(2) &&
+      bookmaker.key in gameDict
+    ) {
       team3 = index;
       thisGame.setTeamOdds(2, bookmaker.markets[0].outcomes[2].price);
     }
