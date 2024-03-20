@@ -54,8 +54,8 @@ class Game {
     return this.interest;
   }
 
-  inTimeRange(startTime, later) {
-    if (startTime < later) {
+  inTimeRange(startTime, now, later) {
+    if (startTime > now && startTime < later) {
       return true;
     } else {
       return false;
@@ -111,7 +111,7 @@ function bestOdds(game) {
     const later = new Date(
       now.getFullYear(),
       now.getMonth(),
-      now.getDate() + 3
+      now.getDate() + 1
     );
     later.setHours(23, 59, 59, 999);
     let gameDict = {
@@ -131,7 +131,7 @@ function bestOdds(game) {
         oddsMath(bookmaker, index, game, thisGame, gameDict);
       }
     });
-    if (thisGame.inTimeRange(startTime, later)) {
+    if (thisGame.inTimeRange(startTime, now, later)) {
       return thisGame;
     } else return null;
   } catch {
